@@ -8,6 +8,9 @@
 ###
 
 # docker build -t ebx5.8.1-azure-openidconnect .
+# put your ebxLicense in ~/.profile
+# export EBXLICENSE=XXXXX-XXXXX-XXXXX-XXXXX
+# source ~/.profile
 # docker run -p 9090:8080 -e "CATALINA_OPTS=-DebxLicense=$EBXLICENSE" ebx5.8.1-azure-openidconnect
 # docker run -it ebx5.8.1-azure-openidconnect bash
 # docker ps # find your container name
@@ -70,7 +73,6 @@ RUN chmod +x addJarLib.sh \
 && ./addJarLib.sh http://central.maven.org/maven2/org/apache/commons/commons-lang3/3.8.1/commons-lang3-3.8.1.jar http://central.maven.org/maven2/org/json/json/20180813/json-20180813.jar \
 && rm -rf addJarLib.sh
 
-
 ####
 #### SETUP EBX 5.8.1
 ####
@@ -104,13 +106,29 @@ ENV CATALINA_OPTS ""
 RUN groupadd -g 1000 user \
    && useradd -u 1000 -g 1000 -m -s /bin/bash user \
    && chown -R 1000 /data
-USER user
 
 ###
 # setup project
 ###
 
-COPY CustomDirectoryRestToken-0.1.jar lib/
+RUN cd /tmp
+COPY setupMaven.sh setupMaven.sh
+RUN chmod +x setupMaven.sh \
+  && ./setupMaven.sh
+
+RUN yum install -y git
+
+RUN git clone https://github.com/mickaelgermemont/ebx-customdirectory-openidconnect.git \
+  && cd ebx-customdirectory-openidconnect \
+  && mvn install \
+  && cp /data/app/tomcat/ebx-customdirectory-openidconnect/target/CustomDirectoryRestToken-0.1.jar $CATALINA_HOME/lib/ \
+  && rm -rf /tmp/ebx-customdirectory-openidconnect
+
+# COPY CustomDirectoryRestToken-0.1.jar lib/
+
+RUN cd $CATALINA_HOME
+
+USER user
 
 EXPOSE 8080
 WORKDIR /data/app
