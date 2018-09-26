@@ -8,7 +8,7 @@
 ###
 
 # docker build -t ebx5.8.1-azure-openidconnect .
-# docker run -p 9090:8080 -e "CATALINA_OPTS=-DebxLicense=XXXXX-XXXXX-XXXXX-XXXXX" ebx5.8.1-azure-openidconnect
+# docker run -p 9090:8080 -e "CATALINA_OPTS=-DebxLicense=$EBXLICENSE" ebx5.8.1-azure-openidconnect
 # docker run -it ebx5.8.1-azure-openidconnect bash
 # docker ps # find your container name
 # docker exec -it dazzling_roentgen /bin/bash
