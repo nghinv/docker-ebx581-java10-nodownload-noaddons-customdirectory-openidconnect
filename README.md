@@ -18,6 +18,11 @@ docker run -p 9090:8080 -e "CATALINA_OPTS=-DebxLicense=$EBXLICENSE" ebx5.8.1-azu
 ```
 
 ## EBX
+
+open your browser at ```http://localhost:9090/ebx```
+
+create your repository and create user admin/admin
+
 you can login as usual with admin/admin
 
 also you can use a openidconnect bearer token, use the following
