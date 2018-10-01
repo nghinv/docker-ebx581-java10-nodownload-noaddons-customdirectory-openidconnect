@@ -1,6 +1,6 @@
-# docker-ebx581-java10-nodownload-noaddons-customdirectory-openidconnect
+# docker-ebx581-java11-nodownload-noaddons-customdirectory-openidconnect
 
-works with Azure
+works with Azure and jdk 11
 
 ## build
 
