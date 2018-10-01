@@ -31,14 +31,14 @@ RUN yum -y install tar unzip wget findutils shadow-utils.x86_64 \
 WORKDIR /data
 
 ####
-#### SETUP JDK JAVA.10
+#### SETUP JDK JAVA.11
 ####
 
-RUN curl -L -b "oraclelicense=a" http://download.oracle.com/otn-pub/java/jdk/10.0.2+13/19aef61b38124481863b1413dce1855f/jdk-10.0.2_linux-x64_bin.rpm -O
-RUN echo "5b356630f0ec00369e108bb91138658de214d73ec5e61fedd986828dfe9dfc98  jdk-10.0.2_linux-x64_bin.rpm" > SHA256SUMS
+RUN curl -L -b "oraclelicense=a" http://download.oracle.com/otn-pub/java/jdk/11+28/55eed80b163941c8885ad9298e6d786a/jdk-11_linux-x64_bin.rpm -O
+RUN echo "049425c2dbca9bab2298bb2ab08958ce5d2ba311e632ebb45d1c2231961ee7aa  jdk-11_linux-x64_bin.rpm" > SHA256SUMS
 RUN sha256sum -c SHA256SUMS
-RUN rpm -ivh jdk-10.0.2_linux-x64_bin.rpm
-RUN rm -fr jdk-10.0.2_linux-x64_bin.rpm
+RUN rpm -ivh jdk-11_linux-x64_bin.rpm
+RUN rm -fr jdk-11_linux-x64_bin.rpm
 
 ####
 #### SETUP TOMCAT 9
@@ -69,7 +69,7 @@ RUN chmod +x addOracleLibs.sh \
 
 COPY addJarLib.sh addJarLib.sh
 RUN chmod +x addJarLib.sh \
-&& ./addJarLib.sh http://central.maven.org/maven2/com/h2database/h2/1.4.197/h2-1.4.197.jar http://central.maven.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar http://central.maven.org/maven2/org/slf4j/slf4j-simple/1.7.25/slf4j-simple-1.7.25.jar \
+&& ./addJarLib.sh http://central.maven.org/maven2/com/h2database/h2/1.4.197/h2-1.4.197.jar http://central.maven.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar http://central.maven.org/maven2/org/slf4j/slf4j-simple/1.7.25/slf4j-simple-1.7.25.jar http://central.maven.org/maven2/javax/xml/ws/jaxws-api/2.3.0/jaxws-api-2.3.0.jar http://central.maven.org/maven2/javax/xml/soap/javax.xml.soap-api/1.4.0/javax.xml.soap-api-1.4.0.jar \
 && ./addJarLib.sh http://central.maven.org/maven2/org/apache/commons/commons-lang3/3.8.1/commons-lang3-3.8.1.jar http://central.maven.org/maven2/org/json/json/20180813/json-20180813.jar \
 && rm -rf addJarLib.sh
 
@@ -82,13 +82,11 @@ ENV EBX_HOME /data/app/ebx
 RUN mkdir -p ${EBX_HOME} \
     && mkdir /tmp/ebx
 
-COPY ebx_CD_5.8.1.1067-0023.zip /tmp/ebx/ebx.zip
-
-RUN unzip -q -d /tmp/ebx/ /tmp/ebx/ebx.zip \
-    && cp -v /tmp/ebx/ebx.software/webapps/wars-packaging/*.war webapps/ \
-    && cp -v /tmp/ebx/ebx.software/lib/ebx.jar lib/ \
-    && rm -fr /tmp/ebx/ \
-    && mkdir -p conf/Catalina/localhost
+  COPY ebx_CD_5.8.1.1067-0027 /tmp/ebx
+  RUN cp -v /tmp/ebx/ebx.software/webapps/wars-packaging/*.war webapps/ \
+      && cp -v /tmp/ebx/ebx.software/lib/ebx.jar lib/ \
+      && rm -fr /tmp/ebx/ \
+      && mkdir -p conf/Catalina/localhost
 
 COPY context/ebx.xml ${CATALINA_HOME}/conf/Catalina/localhost/ebx.xml
 COPY context.xml conf/context.xml
@@ -96,16 +94,10 @@ COPY context.xml conf/context.xml
 # COPY logging.properties conf/logging.properties
 COPY ebx.properties ${EBX_HOME}/ebx.properties
 
-ENV JAVAJDK10FIX --add-modules java.xml.ws
-
 ENV PATH $CATALINA_HOME/bin:$PATH
 ENV EBX_OPTS="-Debx.home=${EBX_HOME} -Debx.properties=${EBX_HOME}/ebx.properties"
-ENV JAVA_OPTS="${EBX_OPTS} ${JAVA_OPTS} -Dorg.ops4j.pax.logging.DefaultServiceLog.level=WARN -Dorg.apache.cxf.Logger=org.apache.cxf.common.logging.Slf4jLogger ${JAVAJDK10FIX}"
+ENV JAVA_OPTS="${EBX_OPTS} ${JAVA_OPTS} -Dorg.ops4j.pax.logging.DefaultServiceLog.level=WARN -Dorg.apache.cxf.Logger=org.apache.cxf.common.logging.Slf4jLogger"
 ENV CATALINA_OPTS ""
-
-RUN groupadd -g 1000 user \
-   && useradd -u 1000 -g 1000 -m -s /bin/bash user \
-   && chown -R 1000 /data
 
 ###
 # setup project
@@ -114,7 +106,8 @@ RUN groupadd -g 1000 user \
 RUN cd /tmp
 COPY setupMaven.sh setupMaven.sh
 RUN chmod +x setupMaven.sh \
-  && ./setupMaven.sh
+  && ./setupMaven.sh \
+  && rm -rf setupMaven.sh
 
 RUN yum install -y git
 
@@ -124,10 +117,13 @@ RUN git clone https://github.com/mickaelgermemont/ebx-customdirectory-openidconn
   && cp /data/app/tomcat/ebx-customdirectory-openidconnect/target/CustomDirectoryRestToken-0.1.jar $CATALINA_HOME/lib/ \
   && rm -rf /tmp/ebx-customdirectory-openidconnect
 
-# COPY CustomDirectoryRestToken-0.1.jar lib/
+###
+# last
+###
 
-RUN cd $CATALINA_HOME
-
+RUN groupadd -g 1000 user \
+   && useradd -u 1000 -g 1000 -m -s /bin/bash user \
+   && chown -R 1000 /data
 USER user
 
 EXPOSE 8080

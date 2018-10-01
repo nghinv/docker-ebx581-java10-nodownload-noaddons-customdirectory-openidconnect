@@ -17,6 +17,12 @@ docker build -t ebx5.8.1-azure-openidconnect .
 docker run -p 9090:8080 -e "CATALINA_OPTS=-DebxLicense=$EBXLICENSE" ebx5.8.1-azure-openidconnect
 ```
 
+## connect to runnign container
+
+docker ps # find your <container_name>
+docker exec -it <container_name> /bin/bash
+docker exec -it blissful_clarke /bin/bash
+
 ## EBX
 
 open your browser at ```http://localhost:9090/ebx```
